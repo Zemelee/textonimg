@@ -1,0 +1,103 @@
+━━━━━━━━━━━━━━━━━━━━━━━━
+  图片加文字工具 - 使用说明
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ 每次必填（固定部分）
+
+  --input  图片名称
+  --text   文案内容
+
+  ═══ 完整命令 ═══
+  python image.py --input 图片.jpg --text "文字内容"
+  ═════════════════
+
+  例子: python image.py --input 活动图.jpg --text "全场五折"
+  文案需要换行时，在需要换行的地方加上 "\n" 即可，如 "今日优惠\n全场五折"
+
+■ 想改什么就加什么
+
+  改字体          --font 字体名
+    字体名可选: sh1 (默认黑体)/ sh2 (更粗)/ sh3 (最粗)
+              yahei (雅黑)/ kaiti (楷体)/ xingshu (行书)
+    例子：--font sh1
+
+  改字号          --font-size 数字
+    不写就自动适配，想固定就写数字
+    例子：--font-size 60
+
+  改颜色          --color "颜色代码"
+    例子：--color "#FF0000"（红色）
+    选择颜色网站：https://www.sojson.com/web/panel.html
+
+  改位置          --position "X Y"
+    "0 0"=左上角，不写就自动选好位置
+    例子：--position "200 500"
+
+  文字对齐        --align 对齐方式
+    left (左对齐)/ center (居中)/ right (右对齐)
+
+  字间距          --letter-spacing 数字
+    数字越大字越散，默认4
+
+  行间距          --line-gap 数字
+    多行文字的行间距离，越大换行时上下越宽，默认18
+
+
+■ 加品牌名
+
+  --brand "品牌名"
+  例子：--brand "YQ"
+
+  品牌名颜色      --brand-color "颜色代码"
+  品牌名字号      --brand-size 数字
+  品牌名位置      --brand-position "X Y"
+
+
+■ 完整例子（可以直接照抄，改引号里的内容就行）
+
+  python image.py --input 我的图片.jpg --text "限时优惠\n全场五折" --font kaiti --color "#FF0000" --position "100 300" --brand "YQ"
+
+
+■ 输出图片
+
+  自动生成在和原图同一个文件夹，文件名末尾加上1
+  比如 活动图.jpg → 活动图1.jpg
+
+
+完整例子1：
+
+python image.py \
+    --input input.jpg \
+    --text "文案内容用\n手动换行\n换几行都行" \
+    --position "100 200" \
+    --font sh1 \
+    --font-size auto \
+    --color "#FFFFFF" \
+    --align left \
+    --letter-spacing 4 \
+    --line-gap 18 \
+    --padding-x 15 \
+    --padding-y 5 \
+    --brand "YQ" \
+    --brand-position "200 50" \
+    --brand-color "#FFFFFF" \
+    --brand-size auto
+
+
+
+简洁版说明：
+图片名称 --input
+文案内容 --text
+文案位置 --position
+字体类型 --font
+字体大小 --font-size
+字体颜色 --color
+对齐方式 --align
+字间距 --letter-spacing
+行间距 --line-gap
+阴影上下边距  --padding-x
+阴影左右边距  --padding-y
+商标内容 --brand
+商标位置 --brand-position
+商标颜色 --brand-color
+商标大小 --brand-size

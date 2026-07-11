@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>医美文案海报制作工具</title>
+<style>
+  /* ========== Reset & Base ========== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ========== @font-face: load local fonts for canvas rendering ========== */
+  @font-face {
+    font-family: 'Source Han Sans CN';
+    src: url('fonts/SourceHanSansCN-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Source Han Sans CN';
+    src: url('fonts/SourceHanSansCN-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Source Han Sans CN';
+    src: url('fonts/SourceHanSansCN-Bold.otf') format('opentype');
+    font-weight: bold;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Microsoft YaHei';
+    src: url('fonts/msyh.ttc') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'KaiTi';
+    src: url('fonts/simkai.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Zhi Mang Xing';
+    src: url('fonts/ZhiMangXing-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: #f5f0eb;
+    color: #3d3a36;
+    min-height: 100vh;
+  }
+
+  /* ========== Header ========== */
+  .app-header {
+    background: linear-gradient(135deg, #d4b896 0%, #c9a96e 50%, #b8925a 100%);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(201, 169, 110, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+  .app-header .subtitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 1px;
+  }
+
+  /* ========== Layout ========== */
+  .app-container {
+    display: flex;
+    gap: 16px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 16px;
+    min-height: calc(100vh - 52px);
+  }
+
+  .preview-column {
+    flex: 0 0 52%;
+    max-width: 52%;
+    position: sticky;
+    top: 72px;
+    align-self: flex-start;
+  }
+
+  .controls-column {
+    flex: 0 0 calc(48% - 16px);
+    max-width: calc(48% - 16px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ========== Preview Card ========== */
+  .preview-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+    overflow: hidden;
+    padding: 14px;
+  }
+  .preview-card .preview-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8a7f73;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .preview-card .preview-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 12px;
+    background: #c9a96e;
+    border-radius: 2px;
+  }
+  .canvas-wrapper {
+    position: relative;
+    width: 100%;
+    background: #f0ebe4;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 3 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .canvas-wrapper canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .canvas-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #b5a99a;
+    text-align: center;
+    padding: 30px 16px;
+    position: absolute;
+    inset: 0;
+  }
+  .canvas-placeholder .icon {
+    font-size: 36px;
+    opacity: 0.5;
+  }
+  .canvas-placeholder .text {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .canvas-placeholder .text small {
+    font-size: 11px;
+    color: #c9b9a8;
+  }
+
+  /* ========== Controls ========== */
+  .control-section {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .control-section:hover {
+    box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f0ebe4;
+  }
+  .section-header h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5c534a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-header h3 .badge {
+    font-size: 9px;
+    font-weight: 400;
+    background: #c9a96e;
+    color: #fff;
+    border-radius: 3px;
+    padding: 1px 6px;
+  }
+  .section-body {
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ========== Form Elements ========== */
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .form-group label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #7a7168;
+  }
+  .form-group .helper {
+    font-size: 10px;
+    color: #b5a99a;
+    margin-top: 1px;
+  }
+  .form-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .form-row .form-group {
+    flex: 1;
+    min-width: 0;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1.5px solid #e5ddd5;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    color: #3d3a36;
+    background: #faf8f5;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  textarea:focus,
+  select:focus {
+    border-color: #c9a96e;
+    box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.15);
+    background: #fff;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.5;
+  }
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b5a99a'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  input[type="color"] {
+    width: 34px;
+    height: 30px;
+    padding: 2px;
+    border: 1.5px solid #e5ddd5;
+    border-radius: 6px;
+    cursor: pointer;
+    background: none;
+  }
+  input[type="color"]:hover { border-color: #c9a96e; }
+
+  /* Range slider */
+  .range-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .range-group input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 3px;
+    border-radius: 2px;
+    background: #e5ddd5;
+    outline: none;
+    transition: background 0.2s;
+  }
+  .range-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #c9a96e;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    transition: transform 0.15s;
+  }
+  .range-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+  .range-group input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #c9a96e;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .range-group input[type="range"]:focus {
+    box-shadow: none;
+    border: none;
+  }
+  .range-value {
+    min-width: 28px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5c534a;
+  }
+
+  /* Checkbox as toggle */
+  .checkbox-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #7a7168;
+    cursor: pointer;
+    user-select: none;
+  }
+  .checkbox-toggle input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border: 1.5px solid #d5cdc3;
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .checkbox-toggle input[type="checkbox"]:checked {
+    background: #c9a96e;
+    border-color: #c9a96e;
+  }
+  .checkbox-toggle input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  /* Alignment toggle buttons */
+  .align-toggle {
+    display: flex;
+    gap: 0;
+    border: 1.5px solid #e5ddd5;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #faf8f5;
+  }
+  .align-toggle button {
+    flex: 1;
+    padding: 5px 10px;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    color: #7a7168;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .align-toggle button:not(:last-child) {
+    border-right: 1px solid #e5ddd5;
+  }
+  .align-toggle button.active {
+    background: #c9a96e;
+    color: #fff;
+    font-weight: 500;
+  }
+  .align-toggle button:hover:not(.active) {
+    background: #f0ebe4;
+  }
+
+  /* Radio group for position mode */
+  .radio-group {
+    display: flex;
+    gap: 0;
+    border: 1.5px solid #e5ddd5;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #faf8f5;
+  }
+  .radio-group label {
+    flex: 1;
+    padding: 5px 10px;
+    text-align: center;
+    font-size: 11px;
+    color: #7a7168;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-right: 1px solid #e5ddd5;
+  }
+  .radio-group label:last-child { border-right: none; }
+  .radio-group label.active {
+    background: #c9a96e;
+    color: #fff;
+    font-weight: 500;
+  }
+  .radio-group label:hover:not(.active) { background: #f0ebe4; }
+  .radio-group input[type="radio"] { display: none; }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed #d5cdc3;
+    border-radius: 8px;
+    padding: 16px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #faf8f5;
+  }
+  .upload-zone:hover,
+  .upload-zone.dragover {
+    border-color: #c9a96e;
+    background: #f8f4ee;
+  }
+  .upload-zone .upload-icon {
+    font-size: 22px;
+    color: #c9a96e;
+    margin-bottom: 4px;
+  }
+  .upload-zone .upload-text {
+    font-size: 12px;
+    color: #8a7f73;
+  }
+  .upload-zone .upload-text strong {
+    color: #c9a96e;
+  }
+  .upload-zone .upload-hint {
+    font-size: 10px;
+    color: #b5a99a;
+    margin-top: 3px;
+  }
+  .file-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #f5f0eb;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #5c534a;
+    margin-top: 6px;
+  }
+  .file-info .remove-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #b5a99a;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 4px;
+  }
+  .file-info .remove-btn:hover { color: #c0392b; }
+
+  /* ========== Download Button ========== */
+  .download-bar {
+    display: flex;
+    gap: 8px;
+  }
+  .btn-primary {
+    flex: 1;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #d4b896, #c9a96e);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(201, 169, 110, 0.3);
+    font-family: inherit;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 14px rgba(201, 169, 110, 0.4);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-secondary {
+    padding: 10px 14px;
+    background: #f0ebe4;
+    color: #7a7168;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .btn-secondary:hover {
+    background: #e5ddd5;
+  }
+
+  /* ========== Loading ========== */
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(245, 240, 235, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    z-index: 10;
+  }
+  .loading-overlay.show {
+    display: flex;
+  }
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #e5ddd5;
+    border-top-color: #c9a96e;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ========== Toast ========== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #3d3a36;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 999;
+    pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ========== Responsive ========== */
+  @media (max-width: 900px) {
+    .app-container {
+      flex-direction: column;
+      padding: 12px;
+      gap: 14px;
+    }
+    .preview-column {
+      flex: none;
+      max-width: 100%;
+      position: static;
+    }
+    .controls-column {
+      flex: none;
+      max-width: 100%;
+    }
+    .app-header {
+      padding: 12px 16px;
+    }
+    .app-header h1 {
+      font-size: 16px;
+    }
+    .app-header .subtitle {
+      font-size: 10px;
+    }
+  }
+
+  /* ========== Small UI polish ========== */
+  .section-body .form-group:last-child {
+    margin-bottom: 0;
+  }
+  ::selection {
+    background: rgba(201, 169, 110, 0.25);
+  }
+  .inline-flex {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>医美文案海报制作</h1>
+  <span class="subtitle">YIMEI POSTER TOOL</span>
+</header>
+
+<div class="app-container">
+
+  <!-- ===== Preview Column ===== -->
+  <div class="preview-column">
+    <div class="preview-card">
+      <div class="preview-title">效果预览</div>
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <div class="canvas-placeholder" id="placeholder">
+          <div class="icon">&#127912;</div>
+          <div class="text">
+            上传图片即可预览<br>
+            <small>支持 JPG / PNG 格式</small>
+          </div>
+        </div>
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner"></div>
+        </div>
+        <canvas id="previewCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Controls Column ===== -->
+  <div class="controls-column">
+
+    <!-- Section 1: Upload -->
+    <div class="control-section">
+      <div class="section-header">
+        <h3>&#128206; 图片上传</h3>
+      </div>
+      <div class="section-body">
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">&#128247;</div>
+          <div class="upload-text">点击或拖拽图片到此处 <strong>上传</strong></div>
+          <div class="upload-hint">支持 JPG / PNG 格式</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none">
+        <div class="file-info" id="fileInfo" style="display:none">
+          <span>&#128196;</span>
+          <span id="fileName"></span>
+          <button class="remove-btn" id="removeFileBtn" title="移除图片">&times;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Text -->
+    <div class="control-section">
+      <div class="section-header">
+        <h3>&#128221; 文案内容</h3>
+      </div>
+      <div class="section-body">
+        <div class="form-group">
+          <label for="textContent">文案内容</label>
+          <textarea id="textContent" placeholder="输入要叠加的文案内容..."></textarea>
+          <span class="helper">使用 \n 表示换行</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Text Style -->
+    <div class="control-section">
+      <div class="section-header">
+        <h3>&#127912; 文字样式</h3>
+      </div>
+      <div class="section-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fontSelect">字体</label>
+            <select id="fontSelect">
+              <option value="sh1">思源黑体 (SH1)</option>
+              <option value="sh2">思源黑体 中等 (SH2)</option>
+              <option value="sh3">思源黑体 粗体 (SH3)</option>
+              <option value="yahei">微软雅黑 (YaHei)</option>
+              <option value="kaiti">楷体 (KaiTi)</option>
+              <option value="xingshu">行书 (XingShu)</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:0.7">
+            <label for="fontSize">字号</label>
+            <input type="number" id="fontSize" value="48" min="12" max="200" style="width:80px">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:0 0 auto">
+            <label for="textColor">颜色</label>
+            <input type="color" id="textColor" value="#ffffff">
+          </div>
+          <div class="form-group">
+            <label>对齐方式</label>
+            <div class="align-toggle" id="alignToggle">
+              <button data-value="left" class="active">左对齐</button>
+              <button data-value="center">居中</button>
+              <button data-value="right">右对齐</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Spacing -->
+    <div class="control-section">
+      <div class="section-header">
+        <h3>&#128200; 文字间距</h3>
+      </div>
+      <div class="section-body">
+        <div class="form-group">
+          <label for="letterSpacing">字间距</label>
+          <div class="range-group">
+            <input type="range" id="letterSpacing" min="0" max="20" value="4" step="1">
+            <span class="range-value" id="letterSpacingVal">4</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="lineGap">行间距</label>
+          <div class="range-group">
+            <input type="range" id="lineGap" min="0" max="50" value="18" step="1">
+            <span class="range-value" id="lineGapVal">18</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Position -->
+    <div class="control-section">
+      <div class="section-header">
+        <h3>&#128204; 文字位置</h3>
+      </div>
+      <div class="section-body">
+        <div class="form-group">
+          <label>定位模式</label>
+          <div class="radio-group" id="positionModeGroup">
+            <label class="active">
+              <input type="radio" name="posMode" value="auto" checked> 智能定位
+            </label>
+            <label>
+              <input type="radio" name="posMode" value="custom"> 自定义坐标
+            </label>
+          </div>
+        </div>
+        <div class="form-row" id="customPosRow" style="display:none">
+          <div class="form-group">
+            <label for="posX">X 坐标</label>
+            <input type="number" id="posX" value="100" min="0">
+          </div>
+          <div class="form-group">
+            <label for="posY">Y 坐标</label>
+            <input type="number" id="posY" value="200" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="paddingX">内边距 X</label>
+            <div class="range-group">
+              <input type="range" id="paddingX" min="0" max="30" value="5" step="1">
+              <span class="range-value" id="paddingXVal">5</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="paddingY">内边距 Y</label>
+            <div class="range-group">
+              <input type="range" id="paddingY" min="0" max="30" value="5" step="1">
+              <span class="range-value" id="paddingYVal">5</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6: Brand -->
+    <div class="control-section">
+      <div class="section-header">
+        <h3>&#127894; 品牌水印</h3>
+      </div>
+      <div class="section-body">
+        <div class="form-group">
+          <label for="brandText">品牌名称</label>
+          <input type="text" id="brandText" placeholder="如：YQ" value="">
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:0 0 auto">
+            <label for="brandColor">品牌颜色</label>
+            <input type="color" id="brandColor" value="#ffffff">
+          </div>
+          <div class="form-group">
+            <label for="brandSize">品牌字号</label>
+            <div class="inline-flex">
+              <input type="number" id="brandSize" value="60" min="12" max="200" style="width:80px">
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="brandPosX">品牌位置 X</label>
+            <input type="number" id="brandPosX" value="200" min="0">
+          </div>
+          <div class="form-group">
+            <label for="brandPosY">品牌位置 Y</label>
+            <input type="number" id="brandPosY" value="50" min="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download -->
+    <div class="download-bar">
+      <button class="btn-primary" id="downloadBtn">&#128190; 生成并下载</button>
+      <button class="btn-secondary" id="resetBtn">&#8634; 重置</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ============================================================
+  // DOM refs
+  // ============================================================
+  const canvas = document.getElementById('previewCanvas');
+  const ctx = canvas.getContext('2d');
+  const canvasWrapper = document.getElementById('canvasWrapper');
+  const placeholder = document.getElementById('placeholder');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const fileInput = document.getElementById('fileInput');
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInfo = document.getElementById('fileInfo');
+  const fileName = document.getElementById('fileName');
+  const removeFileBtn = document.getElementById('removeFileBtn');
+  const textContent = document.getElementById('textContent');
+  const fontSelect = document.getElementById('fontSelect');
+  const fontSize = document.getElementById('fontSize');
+  const textColor = document.getElementById('textColor');
+  const letterSpacing = document.getElementById('letterSpacing');
+  const letterSpacingVal = document.getElementById('letterSpacingVal');
+  const lineGap = document.getElementById('lineGap');
+  const lineGapVal = document.getElementById('lineGapVal');
+  const paddingX = document.getElementById('paddingX');
+  const paddingXVal = document.getElementById('paddingXVal');
+  const paddingY = document.getElementById('paddingY');
+  const paddingYVal = document.getElementById('paddingYVal');
+  const brandText = document.getElementById('brandText');
+  const brandColor = document.getElementById('brandColor');
+  const brandSize = document.getElementById('brandSize');
+  const brandPosX = document.getElementById('brandPosX');
+  const brandPosY = document.getElementById('brandPosY');
+  const posX = document.getElementById('posX');
+  const posY = document.getElementById('posY');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const toastEl = document.getElementById('toast');
+  const customPosRow = document.getElementById('customPosRow');
+
+  // ============================================================
+  // State
+  // ============================================================
+  let sourceImage = null;        // HTML ImageElement
+  let imageDataUrl = null;       // for download
+  let originalWidth = 0;
+  let originalHeight = 0;
+  let renderTimer = null;
+  let isRendering = false;
+
+  // ============================================================
+  // Font fallback mapping
+  // ============================================================
+  function getFontFamily(key) {
+    const map = {
+      sh1: '"Source Han Sans CN", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif',
+      sh2: '"Source Han Sans CN", "Noto Sans SC Medium", "Microsoft YaHei", sans-serif',
+      sh3: '"Source Han Sans CN", "Noto Sans SC Bold", "Microsoft YaHei", sans-serif',
+      yahei: '"Microsoft YaHei", "PingFang SC", sans-serif',
+      kaiti: '"KaiTi", "STKaiti", "Noto Serif SC", serif',
+      xingshu: '"Zhi Mang Xing", "STXingkai", cursive',
+    };
+    return map[key] || map.sh1;
+  }
+
+  function getFontWeight(key) {
+    const map = { sh1: 'normal', sh2: '500', sh3: 'bold' };
+    return map[key] || 'normal';
+  }
+
+  // ============================================================
+  // Toast
+  // ============================================================
+  let toastTimer = null;
+  function showToast(msg, duration) {
+    duration = duration || 2500;
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() {
+      toastEl.classList.remove('show');
+    }, duration);
+  }
+
+  // ============================================================
+  // File upload
+  // ============================================================
+  uploadZone.addEventListener('click', function() {
+    fileInput.click();
+  });
+
+  uploadZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+  });
+  uploadZone.addEventListener('dragleave', function() {
+    uploadZone.classList.remove('dragover');
+  });
+  uploadZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  fileInput.addEventListener('change', function() {
+    if (fileInput.files.length) {
+      handleFile(fileInput.files[0]);
+    }
+  });
+
+  removeFileBtn.addEventListener('click', function() {
+    removeImage();
+  });
+
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) {
+      showToast('请选择图片文件');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      imageDataUrl = e.target.result;
+      const img = new Image();
+      img.onload = function() {
+        sourceImage = img;
+        originalWidth = img.width;
+        originalHeight = img.height;
+        fileName.textContent = file.name;
+        fileInfo.style.display = 'flex';
+        uploadZone.style.display = 'none';
+        placeholder.style.display = 'none';
+        scheduleRender();
+      };
+      img.src = imageDataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeImage() {
+    sourceImage = null;
+    imageDataUrl = null;
+    originalWidth = 0;
+    originalHeight = 0;
+    fileInfo.style.display = 'none';
+    uploadZone.style.display = 'block';
+    placeholder.style.display = 'flex';
+    fileInput.value = '';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.style.display = 'none';
+  }
+
+  // ============================================================
+  // ============================================================
+  // Range slider live values
+  // ============================================================
+  function bindRange(rangeEl, displayEl) {
+    rangeEl.addEventListener('input', function() {
+      displayEl.textContent = rangeEl.value;
+      scheduleRender();
+    });
+  }
+  bindRange(letterSpacing, letterSpacingVal);
+  bindRange(lineGap, lineGapVal);
+  bindRange(paddingX, paddingXVal);
+  bindRange(paddingY, paddingYVal);
+
+  // ============================================================
+  // Position mode toggle
+  // ============================================================
+  document.querySelectorAll('.radio-group').forEach(function(group) {
+    group.querySelectorAll('label').forEach(function(label) {
+      label.addEventListener('click', function() {
+        group.querySelectorAll('label').forEach(function(l) { l.classList.remove('active'); });
+        label.classList.add('active');
+        label.querySelector('input').checked = true;
+        // show/hide custom coords
+        if (group.id === 'positionModeGroup') {
+          customPosRow.style.display = label.querySelector('input').value === 'custom' ? 'flex' : 'none';
+        }
+        scheduleRender();
+      });
+    });
+  });
+
+  // ============================================================
+  // Alignment toggle
+  // ============================================================
+  document.querySelectorAll('.align-toggle').forEach(function(group) {
+    group.querySelectorAll('button').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        group.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        scheduleRender();
+      });
+    });
+  });
+
+  // ============================================================
+  // Debounced render
+  // ============================================================
+  function scheduleRender() {
+    if (!sourceImage) return;
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(doRender, 200);
+  }
+
+  // Bind all controls to scheduleRender
+  [textContent, fontSelect, fontSize, textColor, brandText, brandColor, brandSize, posX, posY, brandPosX, brandPosY]
+    .forEach(function(el) {
+      if (el) el.addEventListener('input', scheduleRender);
+    });
+  [fontSelect, textColor, brandColor].forEach(function(el) {
+    el.addEventListener('change', scheduleRender);
+  });
+
+  // ============================================================
+  // Main render function
+  // ============================================================
+  async function doRender() {
+    if (!sourceImage) return;
+    if (isRendering) return;
+    isRendering = true;
+    loadingOverlay.classList.add('show');
+
+    // Wait a tick for the overlay to show
+    await new Promise(function(r) { setTimeout(r, 30); });
+
+    try {
+      // Use original image dimensions for the offscreen canvas
+      const W = originalWidth;
+      const H = originalHeight;
+
+      // Create offscreen canvas at full resolution
+      const offscreen = document.createElement('canvas');
+      offscreen.width = W;
+      offscreen.height = H;
+      const offCtx = offscreen.getContext('2d');
+
+      // Draw background image
+      offCtx.drawImage(sourceImage, 0, 0, W, H);
+
+      // ---- Parse text ----
+      const rawText = textContent.value || '';
+      const textLines = parseText(rawText, offCtx, W);
+
+      // ---- Font sizing ----
+      const baseSize = parseInt(fontSize.value) || 48;
+
+      const fontKey = fontSelect.value;
+      const fontFamily = getFontFamily(fontKey);
+      const fontWeight = getFontWeight(fontKey);
+      const colorVal = textColor.value;
+      const alignVal = document.querySelector('#alignToggle .active')?.dataset?.value || 'left';
+      const lsVal = parseInt(letterSpacing.value) || 4;
+      const lgVal = parseInt(lineGap.value) || 18;
+      const pxVal = parseInt(paddingX.value) || 5;
+      const pyVal = parseInt(paddingY.value) || 5;
+
+      // Brand
+      const brandName = brandText.value.trim();
+      const brandColorVal = brandColor.value;
+      const brandFontSize = parseInt(brandSize.value) || 60;
+
+      // ---- Draw brand watermark ----
+      if (brandName) {
+        const brandFontStr = fontWeight + ' ' + brandFontSize + 'px ' + getFontFamily('kaiti');
+        offCtx.font = brandFontStr;
+        offCtx.textBaseline = 'middle';
+        offCtx.fillStyle = brandColorVal;
+
+        const brandX = parseInt(brandPosX.value) || 200;
+        const brandY = parseInt(brandPosY.value) || 50;
+
+        offCtx.textAlign = 'center';
+        offCtx.fillText(brandName, brandX, brandY);
+      }
+
+      // ---- Draw main text ----
+      if (textLines.length > 0) {
+        const boxHeight = Math.round(baseSize * 1.25);
+        const lineHeightVal = boxHeight + 4 + lgVal;
+
+        // Determine position
+        const posMode = document.querySelector('#positionModeGroup label.active input')?.value || 'auto';
+        let anchorX, anchorY, startY;
+
+        if (posMode === 'custom') {
+          anchorX = parseInt(posX.value) || 100;
+          anchorY = parseInt(posY.value) || 200;
+          startY = anchorY + Math.round(lineHeightVal / 2);
+        } else {
+          // Smart position: bottom area
+          const marginX = Math.round(W * 0.06);
+          const marginY = Math.round(H * 0.06);
+          const totalTextH = textLines.length * lineHeightVal;
+
+          if (alignVal === 'left') {
+            anchorX = marginX + Math.round(W * 0.08);
+            anchorY = H - marginY - 20;
+            startY = anchorY - totalTextH + Math.round(lineHeightVal / 2);
+          } else if (alignVal === 'right') {
+            anchorX = W - marginX - Math.round(W * 0.08);
+            anchorY = H - marginY - 20;
+            startY = anchorY - totalTextH + Math.round(lineHeightVal / 2);
+          } else {
+            anchorX = Math.round(W / 2);
+            anchorY = H - marginY - 20;
+            startY = anchorY - totalTextH + Math.round(lineHeightVal / 2);
+          }
+        }
+
+        // Draw each line with letter spacing
+        offCtx.textBaseline = 'middle';
+
+        // Pre-calculate line widths
+        const lineWidths = textLines.map(function(ln) {
+          offCtx.font = fontWeight + ' ' + baseSize + 'px ' + fontFamily;
+          let total = 0;
+          for (var c = 0; c < ln.length; c++) {
+            var m = offCtx.measureText(ln[c]);
+            total += m.width + lsVal;
+          }
+          if (ln.length > 0) total -= lsVal;
+          return total;
+        });
+
+        var maxLineW = Math.max.apply(null, lineWidths.length ? lineWidths : [0]);
+
+        for (var i = 0; i < textLines.length; i++) {
+          var ln = textLines[i];
+          var ly = startY + i * lineHeightVal;
+          var lineW = lineWidths[i];
+
+          if (!ln.trim()) continue;
+
+          // Calculate x position based on alignment
+          var cx;
+          if (alignVal === 'center') {
+            cx = anchorX - Math.round(lineW / 2);
+          } else if (alignVal === 'right') {
+            cx = anchorX - lineW;
+          } else {
+            cx = anchorX;
+          }
+
+          // Background shadow rectangle per line
+          var bx = cx - pxVal;
+          var by = ly - Math.round(boxHeight / 2) - pyVal;
+          var bx2 = cx + lineW + pxVal;
+          var by2 = ly + Math.round(boxHeight / 2) + pyVal;
+
+          // Clamp
+          bx = Math.max(0, bx);
+          by = Math.max(0, by);
+          bx2 = Math.min(W, bx2);
+          by2 = Math.min(H, by2);
+
+          var bw = bx2 - bx;
+          var bh = by2 - by;
+
+          // Draw shadow
+          if (bw > 0 && bh > 0) {
+            offCtx.save();
+            offCtx.shadowColor = 'rgba(0,0,0,0.35)';
+            offCtx.shadowBlur = 1;
+            offCtx.fillStyle = 'rgba(0,0,0,0.27)';
+            roundRect(offCtx, bx, by, bw, bh, 12);
+            offCtx.fill();
+            offCtx.restore();
+          }
+
+          // Draw characters with letter spacing
+          offCtx.font = fontWeight + ' ' + baseSize + 'px ' + fontFamily;
+          offCtx.fillStyle = colorVal;
+          offCtx.textBaseline = 'middle';
+
+          var xPos = cx;
+          for (var c = 0; c < ln.length; c++) {
+            offCtx.fillText(ln[c], xPos, ly);
+            xPos += offCtx.measureText(ln[c]).width + lsVal;
+          }
+        }
+      }
+
+      // ---- Render to visible canvas ----
+      const wrapperRect = canvasWrapper.getBoundingClientRect();
+      var displayW = wrapperRect.width - 0; // padding already accounted
+      var displayH = (displayW / W) * H;
+
+      canvas.width = W;
+      canvas.height = H;
+      canvas.style.width = displayW + 'px';
+      canvas.style.height = displayH + 'px';
+      canvas.style.display = 'block';
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(offscreen, 0, 0);
+
+    } catch (err) {
+      console.error('Render error:', err);
+      showToast('渲染出错：' + err.message);
+    } finally {
+      isRendering = false;
+      loadingOverlay.classList.remove('show');
+    }
+  }
+
+  // ============================================================
+  // Text parsing (handles \n)
+  // ============================================================
+  function parseText(text, ctx, maxWidthPx) {
+    // Replace literal \n with newline
+    text = text.replace(/\\n/g, '\n');
+
+    var paragraphs = text.split('\n');
+    var lines = [];
+    var maxTextWidth = Math.round(maxWidthPx * 0.82);
+
+    for (var p = 0; p < paragraphs.length; p++) {
+      var para = paragraphs[p];
+      if (para === '') {
+        lines.push('');
+        continue;
+      }
+      // For single short line, keep as-is
+      if (paragraphs.length === 1 && para.length <= 12) {
+        lines.push(para);
+        continue;
+      }
+      var currentLine = '';
+      for (var c = 0; c < para.length; c++) {
+        var testLine = currentLine + para[c];
+        // Approximate width
+        if (ctx.measureText) {
+          ctx.font = '48px sans-serif';
+          var w = ctx.measureText(testLine).width;
+          if (w <= maxTextWidth) {
+            currentLine = testLine;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = para[c];
+          }
+        } else {
+          // Fallback: character count estimate
+          if (testLine.length * 48 <= maxTextWidth) {
+            currentLine = testLine;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = para[c];
+          }
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+    }
+    return lines;
+  }
+
+  // ============================================================
+  // Round rect helper
+  // ============================================================
+  function roundRect(ctx, x, y, w, h, r) {
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // ============================================================
+  // Download
+  // ============================================================
+  downloadBtn.addEventListener('click', function() {
+    if (!sourceImage) {
+      showToast('请先上传图片');
+      return;
+    }
+    if (isRendering) {
+      showToast('正在渲染中，请稍候...');
+      return;
+    }
+    // Ensure latest render is on canvas
+    // If the canvas doesn't have content matching current params, re-render first
+    doRender().then(function() {
+      // Small delay for render to complete
+      setTimeout(function() {
+        var link = document.createElement('a');
+        link.download = 'yimei_poster_' + Date.now() + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('下载成功');
+      }, 100);
+    });
+  });
+
+  // ============================================================
+  // Reset
+  // ============================================================
+  resetBtn.addEventListener('click', function() {
+    removeImage();
+    textContent.value = '';
+    fontSelect.value = 'sh1';
+    fontSize.value = 48;
+    textColor.value = '#ffffff';
+    letterSpacing.value = 4;
+    lineGap.value = 18;
+    lineGapVal.textContent = '18';
+    paddingX.value = 5;
+    paddingXVal.textContent = '5';
+    paddingY.value = 5;
+    paddingYVal.textContent = '5';
+    brandText.value = '';
+    brandColor.value = '#ffffff';
+    brandSize.value = 60;
+    posX.value = 100;
+    posY.value = 200;
+    brandPosX.value = 200;
+    brandPosY.value = 50;
+
+    // Reset toggles
+    document.querySelectorAll('.radio-group').forEach(function(g) {
+      g.querySelectorAll('label').forEach(function(l, idx) {
+        l.classList.toggle('active', idx === 0);
+        l.querySelector('input').checked = idx === 0;
+      });
+    });
+    customPosRow.style.display = 'none';
+
+    document.querySelectorAll('.align-toggle').forEach(function(g) {
+      g.querySelectorAll('button').forEach(function(b, idx) {
+        b.classList.toggle('active', idx === 0);
+      });
+    });
+
+    showToast('已重置所有设置');
+  });
+
+  // ============================================================
+  // Init
+  // ============================================================
+  canvas.style.display = 'none';
+
+  // Set canvas wrapper aspect ratio based on image when loaded
+  // (handled in doRender)
+
+  showToast('欢迎使用医美文案海报制作工具', 2000);
+
+})();
+</script>
+</body>
+</html>
