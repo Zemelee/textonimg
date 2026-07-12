@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>医美文案海报制作工具</title>
+<title>小庄的漂亮图文外挂</title>
 <style>
   /* ========== Reset & Base ========== */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -71,11 +71,6 @@
     color: #fff;
     letter-spacing: 1px;
   }
-  .app-header .subtitle {
-    font-size: 11px;
-    color: rgba(255,255,255,0.75);
-    letter-spacing: 1px;
-  }
 
   /* ========== Layout ========== */
   .app-container {
@@ -134,10 +129,10 @@
     background: #f0ebe4;
     border-radius: 8px;
     overflow: hidden;
-    aspect-ratio: 3 / 4;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 100px;
   }
   .canvas-wrapper canvas {
     display: block;
@@ -221,11 +216,6 @@
     font-weight: 500;
     color: #7a7168;
   }
-  .form-group .helper {
-    font-size: 10px;
-    color: #b5a99a;
-    margin-top: 1px;
-  }
   .form-row {
     display: flex;
     gap: 8px;
@@ -281,6 +271,47 @@
     background: none;
   }
   input[type="color"]:hover { border-color: #c9a96e; }
+
+  /* Step control (+/-) */
+  .step-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    border: 1.5px solid #e5ddd5;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #faf8f5;
+  }
+  .step-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7a7168;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-btn:hover {
+    background: #f0ebe4;
+  }
+  .step-btn:active {
+    background: #e5ddd5;
+  }
+  .step-value {
+    min-width: 32px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #3d3a36;
+    padding: 0 4px;
+  }
 
   /* Range slider */
   .range-group {
@@ -451,13 +482,6 @@
     color: #c9a96e;
     margin-bottom: 4px;
   }
-  .upload-zone .upload-text {
-    font-size: 12px;
-    color: #8a7f73;
-  }
-  .upload-zone .upload-text strong {
-    color: #c9a96e;
-  }
   .upload-zone .upload-hint {
     font-size: 10px;
     color: #b5a99a;
@@ -590,7 +614,30 @@
     .preview-column {
       flex: none;
       max-width: 100%;
-      position: static;
+      position: fixed;
+      top: 60px;
+      right: 8px;
+      width: 45vw;
+      max-width: 260px;
+      z-index: 50;
+      align-self: auto;
+      touch-action: none;
+      transition: opacity 0.2s;
+    }
+    .preview-column.dragging {
+      transition: none;
+      opacity: 0.92;
+    }
+    .preview-card {
+      padding: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .preview-card .preview-title {
+      font-size: 10px;
+      margin-bottom: 6px;
+    }
+    .canvas-wrapper {
+      min-height: 120px;
     }
     .controls-column {
       flex: none;
@@ -601,9 +648,6 @@
     }
     .app-header h1 {
       font-size: 16px;
-    }
-    .app-header .subtitle {
-      font-size: 10px;
     }
   }
 
@@ -624,8 +668,7 @@
 <body>
 
 <header class="app-header">
-  <h1>医美文案海报制作</h1>
-  <span class="subtitle">YIMEI POSTER TOOL</span>
+  <h1>小庄的漂亮图文外挂</h1>
 </header>
 
 <div class="app-container">
@@ -656,13 +699,12 @@
     <!-- Section 1: Upload -->
     <div class="control-section">
       <div class="section-header">
-        <h3>&#128206; 图片上传</h3>
+        <h3>图片上传</h3>
       </div>
       <div class="section-body">
         <div class="upload-zone" id="uploadZone">
           <div class="upload-icon">&#128247;</div>
-          <div class="upload-text">点击或拖拽图片到此处 <strong>上传</strong></div>
-          <div class="upload-hint">支持 JPG / PNG 格式</div>
+          <div class="upload-hint"><strong>上传图像</strong>，支持 JPG / PNG 格式</div>
         </div>
         <input type="file" id="fileInput" accept="image/*" style="display:none">
         <div class="file-info" id="fileInfo" style="display:none">
@@ -675,14 +717,10 @@
 
     <!-- Section 2: Text -->
     <div class="control-section">
-      <div class="section-header">
-        <h3>&#128221; 文案内容</h3>
-      </div>
       <div class="section-body">
         <div class="form-group">
           <label for="textContent">文案内容</label>
           <textarea id="textContent" placeholder="输入要叠加的文案内容..."></textarea>
-          <span class="helper">使用 \n 表示换行</span>
         </div>
       </div>
     </div>
@@ -690,11 +728,11 @@
     <!-- Section 3: Text Style -->
     <div class="control-section">
       <div class="section-header">
-        <h3>&#127912; 文字样式</h3>
+        <h3>文字样式</h3>
       </div>
       <div class="section-body">
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" style="flex:1.2; min-width:0">
             <label for="fontSelect">字体</label>
             <select id="fontSelect">
               <option value="sh1">思源黑体 (SH1)</option>
@@ -705,22 +743,25 @@
               <option value="xingshu">行书 (XingShu)</option>
             </select>
           </div>
-          <div class="form-group" style="flex:0.7">
-            <label for="fontSize">字号</label>
-            <input type="number" id="fontSize" value="48" min="12" max="200" style="width:80px">
+          <div class="form-group" style="flex:0 0 auto">
+            <label>字号</label>
+            <div class="step-control">
+              <button class="step-btn" data-target="fontSize" data-dir="-1">−</button>
+              <span class="step-value" id="fontSizeDisplay">48</span>
+              <button class="step-btn" data-target="fontSize" data-dir="1">+</button>
+              <input type="hidden" id="fontSize" value="48">
+            </div>
           </div>
-        </div>
-        <div class="form-row">
           <div class="form-group" style="flex:0 0 auto">
             <label for="textColor">颜色</label>
             <input type="color" id="textColor" value="#ffffff">
           </div>
-          <div class="form-group">
-            <label>对齐方式</label>
+          <div class="form-group" style="flex:1">
+            <label>对齐</label>
             <div class="align-toggle" id="alignToggle">
-              <button data-value="left" class="active">左对齐</button>
-              <button data-value="center">居中</button>
-              <button data-value="right">右对齐</button>
+              <button data-value="left" class="active">左</button>
+              <button data-value="center">中</button>
+              <button data-value="right">右</button>
             </div>
           </div>
         </div>
@@ -730,21 +771,23 @@
     <!-- Section 4: Spacing -->
     <div class="control-section">
       <div class="section-header">
-        <h3>&#128200; 文字间距</h3>
+        <h3>文字间距</h3>
       </div>
       <div class="section-body">
-        <div class="form-group">
-          <label for="letterSpacing">字间距</label>
-          <div class="range-group">
-            <input type="range" id="letterSpacing" min="0" max="20" value="4" step="1">
-            <span class="range-value" id="letterSpacingVal">4</span>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="letterSpacing">字间距</label>
+            <div class="range-group">
+              <input type="range" id="letterSpacing" min="0" max="20" value="5" step="1">
+              <span class="range-value" id="letterSpacingVal">5</span>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="lineGap">行间距</label>
-          <div class="range-group">
-            <input type="range" id="lineGap" min="0" max="50" value="18" step="1">
-            <span class="range-value" id="lineGapVal">18</span>
+          <div class="form-group">
+            <label for="lineGap">行间距</label>
+            <div class="range-group">
+              <input type="range" id="lineGap" min="0" max="50" value="25" step="1">
+              <span class="range-value" id="lineGapVal">25</span>
+            </div>
           </div>
         </div>
       </div>
@@ -753,43 +796,56 @@
     <!-- Section 5: Position -->
     <div class="control-section">
       <div class="section-header">
-        <h3>&#128204; 文字位置</h3>
+        <h3>文字位置</h3>
       </div>
       <div class="section-body">
         <div class="form-group">
-          <label>定位模式</label>
-          <div class="radio-group" id="positionModeGroup">
-            <label class="active">
-              <input type="radio" name="posMode" value="auto" checked> 智能定位
-            </label>
-            <label>
-              <input type="radio" name="posMode" value="custom"> 自定义坐标
-            </label>
+          <label for="posX">X 坐标</label>
+          <div class="range-group">
+            <input type="range" id="posX" min="0" max="1000" value="100" step="1">
+            <span class="range-value" id="posXVal">100</span>
           </div>
         </div>
-        <div class="form-row" id="customPosRow" style="display:none">
-          <div class="form-group">
-            <label for="posX">X 坐标</label>
-            <input type="number" id="posX" value="100" min="0">
-          </div>
-          <div class="form-group">
-            <label for="posY">Y 坐标</label>
-            <input type="number" id="posY" value="200" min="0">
+        <div class="form-group">
+          <label for="posY">Y 坐标</label>
+          <div class="range-group">
+            <input type="range" id="posY" min="0" max="1000" value="200" step="1">
+            <span class="range-value" id="posYVal">200</span>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="paddingX">内边距 X</label>
+            <label for="paddingX">阴影横向内边距</label>
             <div class="range-group">
-              <input type="range" id="paddingX" min="0" max="30" value="5" step="1">
-              <span class="range-value" id="paddingXVal">5</span>
+              <input type="range" id="paddingX" min="0" max="30" value="14" step="1">
+              <span class="range-value" id="paddingXVal">14</span>
             </div>
           </div>
           <div class="form-group">
-            <label for="paddingY">内边距 Y</label>
+            <label for="paddingY">阴影纵向内边距</label>
             <div class="range-group">
-              <input type="range" id="paddingY" min="0" max="30" value="5" step="1">
-              <span class="range-value" id="paddingYVal">5</span>
+              <input type="range" id="paddingY" min="0" max="30" value="10" step="1">
+              <span class="range-value" id="paddingYVal">10</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:0 0 auto">
+            <label for="shadowColor">阴影颜色</label>
+            <input type="color" id="shadowColor" value="#000000">
+          </div>
+          <div class="form-group">
+            <label for="shadowOpacity">阴影不透明度</label>
+            <div class="range-group">
+              <input type="range" id="shadowOpacity" min="0" max="100" value="27" step="1">
+              <span class="range-value" id="shadowOpacityVal">27</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="shadowBlur">阴影模糊</label>
+            <div class="range-group">
+              <input type="range" id="shadowBlur" min="0" max="20" value="1" step="1">
+              <span class="range-value" id="shadowBlurVal">1</span>
             </div>
           </div>
         </div>
@@ -799,33 +855,42 @@
     <!-- Section 6: Brand -->
     <div class="control-section">
       <div class="section-header">
-        <h3>&#127894; 品牌水印</h3>
+        <h3>品牌水印</h3>
       </div>
       <div class="section-body">
-        <div class="form-group">
-          <label for="brandText">品牌名称</label>
-          <input type="text" id="brandText" placeholder="如：YQ" value="">
-        </div>
-        <div class="form-row">
+        <div class="form-row" style="align-items: center;">
+          <div class="form-group" style="flex:1">
+            <label for="brandText">品牌名称</label>
+            <input type="text" id="brandText" placeholder="输入品牌名称" value="">
+          </div>
           <div class="form-group" style="flex:0 0 auto">
-            <label for="brandColor">品牌颜色</label>
+            <label for="brandColor">颜色</label>
             <input type="color" id="brandColor" value="#ffffff">
           </div>
-          <div class="form-group">
-            <label for="brandSize">品牌字号</label>
-            <div class="inline-flex">
-              <input type="number" id="brandSize" value="60" min="12" max="200" style="width:80px">
+          <div class="form-group" style="flex:0 0 auto">
+            <label>字号</label>
+            <div class="step-control">
+              <button class="step-btn" data-target="brandSize" data-dir="-1">−</button>
+              <span class="step-value" id="brandSizeDisplay">60</span>
+              <button class="step-btn" data-target="brandSize" data-dir="1">+</button>
+              <input type="hidden" id="brandSize" value="60">
             </div>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label for="brandPosX">品牌位置 X</label>
-            <input type="number" id="brandPosX" value="200" min="0">
+            <div class="range-group">
+              <input type="range" id="brandPosX" min="0" max="1000" value="200" step="1">
+              <span class="range-value" id="brandPosXVal">200</span>
+            </div>
           </div>
           <div class="form-group">
             <label for="brandPosY">品牌位置 Y</label>
-            <input type="number" id="brandPosY" value="50" min="0">
+            <div class="range-group">
+              <input type="range" id="brandPosY" min="0" max="1000" value="50" step="1">
+              <span class="range-value" id="brandPosYVal">50</span>
+            </div>
           </div>
         </div>
       </div>
@@ -833,7 +898,7 @@
 
     <!-- Download -->
     <div class="download-bar">
-      <button class="btn-primary" id="downloadBtn">&#128190; 生成并下载</button>
+      <button class="btn-primary" id="downloadBtn">生成</button>
       <button class="btn-secondary" id="resetBtn">&#8634; 重置</button>
     </div>
 
@@ -876,12 +941,22 @@
   const brandSize = document.getElementById('brandSize');
   const brandPosX = document.getElementById('brandPosX');
   const brandPosY = document.getElementById('brandPosY');
+  const brandPosXVal = document.getElementById('brandPosXVal');
+  const brandPosYVal = document.getElementById('brandPosYVal');
+  const shadowColor = document.getElementById('shadowColor');
+  const shadowOpacity = document.getElementById('shadowOpacity');
+  const shadowOpacityVal = document.getElementById('shadowOpacityVal');
+  const shadowBlur = document.getElementById('shadowBlur');
+  const shadowBlurVal = document.getElementById('shadowBlurVal');
   const posX = document.getElementById('posX');
+  const posXVal = document.getElementById('posXVal');
   const posY = document.getElementById('posY');
+  const posYVal = document.getElementById('posYVal');
   const downloadBtn = document.getElementById('downloadBtn');
   const resetBtn = document.getElementById('resetBtn');
   const toastEl = document.getElementById('toast');
-  const customPosRow = document.getElementById('customPosRow');
+  const fontSizeDisplay = document.getElementById('fontSizeDisplay');
+  const brandSizeDisplay = document.getElementById('brandSizeDisplay');
 
   // ============================================================
   // State
@@ -976,7 +1051,11 @@
         fileInfo.style.display = 'flex';
         uploadZone.style.display = 'none';
         placeholder.style.display = 'none';
-        scheduleRender();
+        canvasWrapper.classList.add('has-image');
+        // Update slider max values based on image dimensions
+        posX.max = originalWidth-30;
+        posY.max = originalHeight-30;
+        scheduleRender(true);
       };
       img.src = imageDataUrl;
     };
@@ -994,6 +1073,7 @@
     fileInput.value = '';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     canvas.style.display = 'none';
+    canvasWrapper.classList.remove('has-image');
   }
 
   // ============================================================
@@ -1010,24 +1090,41 @@
   bindRange(lineGap, lineGapVal);
   bindRange(paddingX, paddingXVal);
   bindRange(paddingY, paddingYVal);
+  bindRange(posX, posXVal);
+  bindRange(posY, posYVal);
+  bindRange(brandPosX, brandPosXVal);
+  bindRange(brandPosY, brandPosYVal);
+  bindRange(shadowOpacity, shadowOpacityVal);
+  bindRange(shadowBlur, shadowBlurVal);
 
   // ============================================================
-  // Position mode toggle
+  // Step control (+/-)
   // ============================================================
-  document.querySelectorAll('.radio-group').forEach(function(group) {
-    group.querySelectorAll('label').forEach(function(label) {
-      label.addEventListener('click', function() {
-        group.querySelectorAll('label').forEach(function(l) { l.classList.remove('active'); });
-        label.classList.add('active');
-        label.querySelector('input').checked = true;
-        // show/hide custom coords
-        if (group.id === 'positionModeGroup') {
-          customPosRow.style.display = label.querySelector('input').value === 'custom' ? 'flex' : 'none';
-        }
-        scheduleRender();
-      });
+  document.querySelectorAll('.step-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var targetId = btn.dataset.target;
+      var dir = parseInt(btn.dataset.dir);
+      var input = document.getElementById(targetId);
+      var display = document.getElementById(targetId + 'Display');
+      var val = parseInt(input.value) || 48;
+      var step = 2;
+      val = Math.max(12, Math.min(200, val + dir * step));
+      input.value = val;
+      if (display) display.textContent = val;
+      scheduleRender();
     });
   });
+
+  // Sync display on manual input change (for programmatic changes)
+  function syncStepDisplay() {
+    document.querySelectorAll('.step-control').forEach(function(group) {
+      var display = group.querySelector('.step-value');
+      if (!display) return;
+      var targetId = display.id.replace('Display', '');
+      var input = document.getElementById(targetId);
+      if (input) display.textContent = input.value;
+    });
+  }
 
   // ============================================================
   // Alignment toggle
@@ -1045,32 +1142,34 @@
   // ============================================================
   // Debounced render
   // ============================================================
-  function scheduleRender() {
+  function scheduleRender(showLoader) {
     if (!sourceImage) return;
     clearTimeout(renderTimer);
-    renderTimer = setTimeout(doRender, 200);
+    renderTimer = setTimeout(function() { doRender(showLoader); }, 30);
   }
 
   // Bind all controls to scheduleRender
-  [textContent, fontSelect, fontSize, textColor, brandText, brandColor, brandSize, posX, posY, brandPosX, brandPosY]
+  [textContent, fontSelect, fontSize, textColor, brandText, brandColor, brandSize, posX, posY, brandPosX, brandPosY, shadowColor]
     .forEach(function(el) {
       if (el) el.addEventListener('input', scheduleRender);
     });
-  [fontSelect, textColor, brandColor].forEach(function(el) {
+  [textColor, brandColor, shadowColor].forEach(function(el) {
     el.addEventListener('change', scheduleRender);
   });
 
   // ============================================================
   // Main render function
   // ============================================================
-  async function doRender() {
+  async function doRender(showLoader) {
     if (!sourceImage) return;
     if (isRendering) return;
     isRendering = true;
-    loadingOverlay.classList.add('show');
 
-    // Wait a tick for the overlay to show
-    await new Promise(function(r) { setTimeout(r, 30); });
+    // Only show loading overlay when explicitly requested (e.g. initial load)
+    if (showLoader) {
+      loadingOverlay.classList.add('show');
+      await new Promise(function(r) { setTimeout(r, 30); });
+    }
 
     try {
       // Use original image dimensions for the offscreen canvas
@@ -1091,7 +1190,7 @@
       const textLines = parseText(rawText, offCtx, W);
 
       // ---- Font sizing ----
-      const baseSize = parseInt(fontSize.value) || 48;
+      const baseSize = Math.max(12, parseInt(fontSize.value) || 48);
 
       const fontKey = fontSelect.value;
       const fontFamily = getFontFamily(fontKey);
@@ -1102,6 +1201,10 @@
       const lgVal = parseInt(lineGap.value) || 18;
       const pxVal = parseInt(paddingX.value) || 5;
       const pyVal = parseInt(paddingY.value) || 5;
+      const shdColor = shadowColor.value;
+      const shdOpacity = parseInt(shadowOpacity.value);
+      if (isNaN(shdOpacity) || shdOpacity < 0) shdOpacity = 27;
+      const shdBlur = parseInt(shadowBlur.value) || 1;
 
       // Brand
       const brandName = brandText.value.trim();
@@ -1110,54 +1213,39 @@
 
       // ---- Draw brand watermark ----
       if (brandName) {
-        const brandFontStr = fontWeight + ' ' + brandFontSize + 'px ' + getFontFamily('kaiti');
+        const brandFontStr = 'normal ' + brandFontSize + 'px ' + getFontFamily('kaiti');
+        offCtx.save();
         offCtx.font = brandFontStr;
         offCtx.textBaseline = 'middle';
         offCtx.fillStyle = brandColorVal;
 
-        const brandX = parseInt(brandPosX.value) || 200;
-        const brandY = parseInt(brandPosY.value) || 50;
+        const brandX = parseInt(brandPosX.value);
+        const brandY = parseInt(brandPosY.value);
 
         offCtx.textAlign = 'center';
         offCtx.fillText(brandName, brandX, brandY);
+        offCtx.restore();
       }
 
       // ---- Draw main text ----
       if (textLines.length > 0) {
-        const boxHeight = Math.round(baseSize * 1.25);
+        // Measure actual text height from font metrics
+        offCtx.font = fontWeight + ' ' + baseSize + 'px ' + fontFamily;
+        var metrics = offCtx.measureText('中');
+        var textActualHeight = Math.round(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+        if (!textActualHeight || textActualHeight < 4) textActualHeight = Math.round(baseSize * 0.9);
+        const boxHeight = textActualHeight;
         const lineHeightVal = boxHeight + 4 + lgVal;
 
-        // Determine position
-        const posMode = document.querySelector('#positionModeGroup label.active input')?.value || 'auto';
-        let anchorX, anchorY, startY;
-
-        if (posMode === 'custom') {
-          anchorX = parseInt(posX.value) || 100;
-          anchorY = parseInt(posY.value) || 200;
-          startY = anchorY + Math.round(lineHeightVal / 2);
-        } else {
-          // Smart position: bottom area
-          const marginX = Math.round(W * 0.06);
-          const marginY = Math.round(H * 0.06);
-          const totalTextH = textLines.length * lineHeightVal;
-
-          if (alignVal === 'left') {
-            anchorX = marginX + Math.round(W * 0.08);
-            anchorY = H - marginY - 20;
-            startY = anchorY - totalTextH + Math.round(lineHeightVal / 2);
-          } else if (alignVal === 'right') {
-            anchorX = W - marginX - Math.round(W * 0.08);
-            anchorY = H - marginY - 20;
-            startY = anchorY - totalTextH + Math.round(lineHeightVal / 2);
-          } else {
-            anchorX = Math.round(W / 2);
-            anchorY = H - marginY - 20;
-            startY = anchorY - totalTextH + Math.round(lineHeightVal / 2);
-          }
-        }
+        // Always use custom coordinates
+        // Y = first line top position, X = depends on alignment
+        const anchorX = parseInt(posX.value);
+        const anchorY = parseInt(posY.value);
+        // textBaseline is 'top', so startY = anchorY directly
+        const startY = anchorY;
 
         // Draw each line with letter spacing
-        offCtx.textBaseline = 'middle';
+        offCtx.textBaseline = 'top';
 
         // Pre-calculate line widths
         const lineWidths = textLines.map(function(ln) {
@@ -1180,21 +1268,23 @@
 
           if (!ln.trim()) continue;
 
-          // Calculate x position based on alignment
+          // X always means left edge of the text block.
+          // Alignment controls how each line is placed within the block.
+          var blockWidth = maxLineW;
           var cx;
           if (alignVal === 'center') {
-            cx = anchorX - Math.round(lineW / 2);
+            cx = anchorX + Math.round((blockWidth - lineW) / 2);
           } else if (alignVal === 'right') {
-            cx = anchorX - lineW;
+            cx = anchorX + blockWidth - lineW;
           } else {
             cx = anchorX;
           }
 
           // Background shadow rectangle per line
           var bx = cx - pxVal;
-          var by = ly - Math.round(boxHeight / 2) - pyVal;
+          var by = ly - pyVal;
           var bx2 = cx + lineW + pxVal;
-          var by2 = ly + Math.round(boxHeight / 2) + pyVal;
+          var by2 = ly + boxHeight + pyVal;
 
           // Clamp
           bx = Math.max(0, bx);
@@ -1206,11 +1296,16 @@
           var bh = by2 - by;
 
           // Draw shadow
-          if (bw > 0 && bh > 0) {
+          if (bw > 0 && bh > 0 && shdOpacity > 0) {
             offCtx.save();
-            offCtx.shadowColor = 'rgba(0,0,0,0.35)';
-            offCtx.shadowBlur = 1;
-            offCtx.fillStyle = 'rgba(0,0,0,0.27)';
+            // Parse hex color to RGB for alpha composition
+            var shdR = parseInt(shdColor.slice(1,3), 16);
+            var shdG = parseInt(shdColor.slice(3,5), 16);
+            var shdB = parseInt(shdColor.slice(5,7), 16);
+            var shdAlpha = shdOpacity / 100;
+            offCtx.shadowColor = 'rgba(' + shdR + ',' + shdG + ',' + shdB + ',0.35)';
+            offCtx.shadowBlur = shdBlur;
+            offCtx.fillStyle = 'rgba(' + shdR + ',' + shdG + ',' + shdB + ',' + shdAlpha + ')';
             roundRect(offCtx, bx, by, bw, bh, 12);
             offCtx.fill();
             offCtx.restore();
@@ -1219,7 +1314,7 @@
           // Draw characters with letter spacing
           offCtx.font = fontWeight + ' ' + baseSize + 'px ' + fontFamily;
           offCtx.fillStyle = colorVal;
-          offCtx.textBaseline = 'middle';
+          offCtx.textBaseline = 'top';
 
           var xPos = cx;
           for (var c = 0; c < ln.length; c++) {
@@ -1335,7 +1430,7 @@
     }
     // Ensure latest render is on canvas
     // If the canvas doesn't have content matching current params, re-render first
-    doRender().then(function() {
+    doRender(true).then(function() {
       // Small delay for render to complete
       setTimeout(function() {
         var link = document.createElement('a');
@@ -1355,31 +1450,34 @@
     textContent.value = '';
     fontSelect.value = 'sh1';
     fontSize.value = 48;
+    fontSizeDisplay.textContent = '48';
     textColor.value = '#ffffff';
     letterSpacing.value = 4;
     lineGap.value = 18;
     lineGapVal.textContent = '18';
-    paddingX.value = 5;
-    paddingXVal.textContent = '5';
-    paddingY.value = 5;
-    paddingYVal.textContent = '5';
+    paddingX.value = 14;
+    paddingXVal.textContent = '14';
+    paddingY.value = 10;
+    paddingYVal.textContent = '10';
+    shadowColor.value = '#000000';
+    shadowOpacity.value = 27;
+    shadowOpacityVal.textContent = '27';
+    shadowBlur.value = 1;
+    shadowBlurVal.textContent = '1';
     brandText.value = '';
     brandColor.value = '#ffffff';
     brandSize.value = 60;
+    brandSizeDisplay.textContent = '60';
     posX.value = 100;
+    posXVal.textContent = '100';
     posY.value = 200;
+    posYVal.textContent = '200';
     brandPosX.value = 200;
+    brandPosXVal.textContent = '200';
     brandPosY.value = 50;
+    brandPosYVal.textContent = '50';
 
-    // Reset toggles
-    document.querySelectorAll('.radio-group').forEach(function(g) {
-      g.querySelectorAll('label').forEach(function(l, idx) {
-        l.classList.toggle('active', idx === 0);
-        l.querySelector('input').checked = idx === 0;
-      });
-    });
-    customPosRow.style.display = 'none';
-
+    // Reset alignment toggle
     document.querySelectorAll('.align-toggle').forEach(function(g) {
       g.querySelectorAll('button').forEach(function(b, idx) {
         b.classList.toggle('active', idx === 0);
@@ -1394,10 +1492,48 @@
   // ============================================================
   canvas.style.display = 'none';
 
+  // ============================================================
+  // Mobile: draggable preview card
+  // ============================================================
+  var previewColumn = document.querySelector('.preview-column');
+  var dragStartX = 0, dragStartY = 0, dragOffsetX = 0, dragOffsetY = 0;
+
+  previewColumn.addEventListener('touchstart', function(e) {
+    if (window.innerWidth > 900) return;
+    var touch = e.touches[0];
+    dragOffsetX = touch.clientX - previewColumn.offsetLeft;
+    dragOffsetY = touch.clientY - previewColumn.offsetTop;
+    dragStartX = touch.clientX;
+    dragStartY = touch.clientY;
+    previewColumn.classList.add('dragging');
+  }, { passive: true });
+
+  previewColumn.addEventListener('touchmove', function(e) {
+    if (window.innerWidth > 900) return;
+    var touch = e.touches[0];
+    // Only start actual drag after a small threshold (prevent tap scroll conflict)
+    var dx = touch.clientX - dragStartX;
+    var dy = touch.clientY - dragStartY;
+    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+    e.preventDefault();
+    var left = touch.clientX - dragOffsetX;
+    var top = touch.clientY - dragOffsetY;
+    // Clamp to viewport
+    var cardW = previewColumn.offsetWidth;
+    var cardH = previewColumn.offsetHeight;
+    left = Math.max(0, Math.min(window.innerWidth - cardW, left));
+    top = Math.max(0, Math.min(window.innerHeight - cardH, top));
+    previewColumn.style.left = left + 'px';
+    previewColumn.style.right = 'auto';
+    previewColumn.style.top = top + 'px';
+  }, { passive: false });
+
+  previewColumn.addEventListener('touchend', function() {
+    previewColumn.classList.remove('dragging');
+  }, { passive: true });
+
   // Set canvas wrapper aspect ratio based on image when loaded
   // (handled in doRender)
-
-  showToast('欢迎使用医美文案海报制作工具', 2000);
 
 })();
 </script>
